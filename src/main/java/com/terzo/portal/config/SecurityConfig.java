@@ -47,6 +47,7 @@ public class SecurityConfig {
                         .requestMatchers("/save-user").hasAnyAuthority("MANAGER","HR")
                         .requestMatchers("/get-employee/details").hasAuthority("MANAGER")
                         .requestMatchers("/update-user").hasAnyAuthority("MANAGER","HR")
+                        .requestMatchers("/add-holiday").hasAnyAuthority("MANAGER","HR")
                         .requestMatchers("/generate-otp").permitAll()
                         .anyRequest().authenticated()
                 )

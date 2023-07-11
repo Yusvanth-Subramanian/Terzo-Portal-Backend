@@ -160,7 +160,7 @@ public class AppController {
         return ResponseHandler.generateResponse("Holiday saved",HttpStatus.OK);
     }
 
-    @GetMapping("get-calendar-data")
+    @GetMapping("/get-calendar-data")
     public ResponseEntity<Object> getCalenderDate(HttpServletRequest request){
         List<UserDataInCalendarDTO> userDataInCalendarDTOS = userService.getCalendarDetails(request);
         return ResponseHandler.generateResponse(userDataInCalendarDTOS,"Calendar details retrieved",HttpStatus.OK);
@@ -226,6 +226,7 @@ public class AppController {
         return ResponseHandler.generateResponse("User Updated",HttpStatus.OK);
     }
 
+    @PutMapping("/update")
     public ResponseEntity<Object> updateCurrentUser(@RequestBody UpdateLoggedInUserDTO loggedInUserDTO){
         userService.updateLoggedInUserDetails(loggedInUserDTO);
         return ResponseHandler.generateResponse("Changes updated",HttpStatus.OK);
