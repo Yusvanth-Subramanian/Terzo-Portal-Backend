@@ -12,16 +12,12 @@ import com.terzo.portal.util.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
-
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -89,13 +85,10 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public List<ListUserDetailsDTO> getEmployees(int start, int end) {
-        Pageable paging = PageRequest.of(start,end);
-        Page<User> list = userRepo.findAll(paging);
-        if(list.hasContent()){
-            return list.stream().map(this::mapToListUserDetailsDTO).toList();
-        }
-        return new ArrayList<>();
+    public List<ListUserDetailsDTO> getEmployees() {
+        List<User> list = userRepo.findAll();
+        return list.stream().map(this::mapToListUserDetailsDTO).toList();
+
     }
 
     @Override
@@ -254,23 +247,43 @@ public class UserServiceImpl implements UserService{
         userRepo.save(user);
     }
 
-    private WorkAnniversaryListDTO mapToWorkAnniversaryListDTO(User i) {
-        LocalDate localDate1 = i.getDateOfJoining().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+    @Override
+    public List<BirthDayBuddiesDTO> getBirthdayBuddies() {
+        List<User> users = userRepo.findAll();
+        return users.stream()
+                .filter(user ->
+                        user.getDateOfBirth().getTime()-new Date().getTime()<=7
+                        && user.getDateOfBirth().getTime()-new Date().getTime()>=0
+                ).map(this::mapToBirthDayBuddiesDtoBuilder).toList();
+    }
+
+    private BirthDayBuddiesDTO mapToBirthDayBuddiesDtoBuilder(User user) {
+        return BirthDayBuddiesDTO.builder()
+                .name(user.getName())
+                .date(user.getDateOfBirth())
+                .department(user.getDepartment().getName())
+                .designation(user.getDesignation())
+                .build();
+    }
+
+    private WorkAnniversaryListDTO mapToWorkAnniversaryListDTO(User user) {
+        LocalDate localDate1 = user.getDateOfJoining().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate localDate2 = new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         int years = (int) ChronoUnit.YEARS.between(localDate1, localDate2);
         return WorkAnniversaryListDTO.builder()
                 .year(years)
-                .department(i.getDepartment().getName())
-                .designation(i.getDesignation())
-                .name(i.getName())
+                .department(user.getDepartment().getName())
+                .designation(user.getDesignation())
+                .name(user.getName())
                 .build();
     }
 
-    private ListUserDetailsDTO mapToListUserDetailsDTO(User i) {
+    private ListUserDetailsDTO mapToListUserDetailsDTO(User user) {
         return ListUserDetailsDTO.builder()
-                .department(i.getDepartment().getName())
-                .designation(i.getDesignation())
-                .name(i.getName())
+                .department(user.getDepartment().getName())
+                .designation(user.getDesignation())
+                .name(user.getName())
+                .joiningDate(user.getDateOfJoining())
                 .build();
     }
 }

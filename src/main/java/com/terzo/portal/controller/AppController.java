@@ -74,9 +74,9 @@ public class AppController {
 
     }
 
-    @GetMapping("/get-employees/{start}/{end}")
-    public ResponseEntity<Object> listAllUser(@PathVariable("start")int start,@PathVariable("end")int end){
-        List<ListUserDetailsDTO> detailsDTOS = userService.getEmployees(start,end);
+    @GetMapping("/get-employees")
+    public ResponseEntity<Object> listAllUser(){
+        List<ListUserDetailsDTO> detailsDTOS = userService.getEmployees();
         return ResponseHandler.generateResponse(detailsDTOS,"User details retrieved",HttpStatus.OK);
     }
 
@@ -107,6 +107,7 @@ public class AppController {
 
     @PostMapping("/apply-leave")
     public ResponseEntity<Object> applyLeave(@RequestBody ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException {
+        System.out.println("in");
         leaveService.applyLeave(applyLeaveDTO,request);
         return ResponseHandler.generateResponse("Leave Applied successfully !",HttpStatus.OK);
     }
@@ -232,5 +233,32 @@ public class AppController {
         return ResponseHandler.generateResponse("Changes updated",HttpStatus.OK);
     }
 
+    @GetMapping("/get-birthday-buddies")
+    public ResponseEntity<Object> getBirthdayBuddies(){
+        return ResponseHandler.generateResponse(
+                userService.getBirthdayBuddies(),
+                "Birthday Buddies list retrieved",HttpStatus.OK
+        );
+    }
+
+    @GetMapping("/get-user-unapproved-leaves")
+    public ResponseEntity<Object> getUserLeaves(HttpServletRequest request){
+        return ResponseHandler.generateResponse(
+                leaveService.getUserLeaves(request),
+                "User's unapproved leaves retrieved",HttpStatus.OK
+        );
+    }
+
+    @PutMapping("/update-leave")
+    public ResponseEntity<Object> updateLeave(@RequestBody GetUserUnapprovedLeavesDTO getUserUnapprovedLeavesDTO){
+        leaveService.updateLeave(getUserUnapprovedLeavesDTO);
+        return ResponseHandler.generateResponse("Leave updated",HttpStatus.OK);
+    }
+
+    @DeleteMapping("/delete-leave/{id}")
+    public ResponseEntity<Object> deleteLeave(@PathVariable("id")int id){
+        leaveService.deleteLeave(id);
+        return ResponseHandler.generateResponse("Leave deleted",HttpStatus.OK);
+    }
 
 }

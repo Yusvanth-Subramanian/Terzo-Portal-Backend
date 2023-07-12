@@ -61,6 +61,10 @@ public class JwtUtils {
         return userDetails.getUsername().equals(username) && !isExpired(jwt);
     }
 
+    public boolean isNotValid(String jwt){
+        return blackedJwt.contains(jwt);
+    }
+
     public void cleanExpired() {
         for (String jwt : blackedJwt) {
             if (isExpired(jwt)) {
@@ -70,5 +74,9 @@ public class JwtUtils {
                 }
             }
         }
+    }
+
+    public void addExpiredJwt(String jwt){
+        blackedJwt.add(jwt);
     }
 }

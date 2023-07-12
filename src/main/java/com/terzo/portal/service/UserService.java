@@ -15,7 +15,7 @@ public interface UserService {
 
     User findByEmail(String email);
 
-    List<ListUserDetailsDTO> getEmployees(int start, int end);
+    List<ListUserDetailsDTO> getEmployees();
 
     CurrentUserProfileDTO getUserDetail();
 
@@ -40,4 +40,6 @@ public interface UserService {
     void update(UpdateUserDTO updateUserDTO);
 
     void updateLoggedInUserDetails(UpdateLoggedInUserDTO loggedInUserDTO);
+
+    List<BirthDayBuddiesDTO> getBirthdayBuddies();
 }

@@ -11,7 +11,7 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ListUserDetailsDTO {
+public class BirthDayBuddiesDTO {
 
     private String name;
 
@@ -19,5 +19,5 @@ public class ListUserDetailsDTO {
 
     private String department;
 
-    private Date joiningDate;
+    private Date date;
 }

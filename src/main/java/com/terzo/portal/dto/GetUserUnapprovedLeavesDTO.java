@@ -11,13 +11,16 @@ import java.util.Date;
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ListUserDetailsDTO {
+public class GetUserUnapprovedLeavesDTO {
 
-    private String name;
+    private int id;
 
-    private String designation;
+    private Date fromDate;
 
-    private String department;
+    private Date toDate;
 
-    private Date joiningDate;
+    private String note;
+
+    private String typeOfLeave;
+
 }

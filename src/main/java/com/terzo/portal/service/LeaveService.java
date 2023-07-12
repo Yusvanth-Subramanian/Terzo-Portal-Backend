@@ -1,6 +1,7 @@
 package com.terzo.portal.service;
 
 import com.terzo.portal.dto.ApplyLeaveDTO;
+import com.terzo.portal.dto.GetUserUnapprovedLeavesDTO;
 import com.terzo.portal.dto.LeavesYetToBeApprovedDTO;
 import com.terzo.portal.dto.UpcomingTimeOffDTO;
 import com.terzo.portal.exceptions.LeaveTypeNotAvailableException;
@@ -17,4 +18,10 @@ public interface LeaveService {
     void approveLeave(int id,HttpServletRequest request);
 
     List<UpcomingTimeOffDTO> getUsersUpcomingTimeOff(HttpServletRequest request);
+
+    List<GetUserUnapprovedLeavesDTO> getUserLeaves(HttpServletRequest request);
+
+    void updateLeave(GetUserUnapprovedLeavesDTO getUserUnapprovedLeavesDTO);
+
+    void deleteLeave(int id);
 }

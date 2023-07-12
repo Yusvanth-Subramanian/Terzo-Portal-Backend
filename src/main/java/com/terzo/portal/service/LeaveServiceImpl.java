@@ -1,9 +1,6 @@
 package com.terzo.portal.service;
 
-import com.terzo.portal.dto.ApplyLeaveDTO;
-import com.terzo.portal.dto.EmailDTO;
-import com.terzo.portal.dto.LeavesYetToBeApprovedDTO;
-import com.terzo.portal.dto.UpcomingTimeOffDTO;
+import com.terzo.portal.dto.*;
 import com.terzo.portal.entity.AppliedLeave;
 import com.terzo.portal.entity.User;
 import com.terzo.portal.exceptions.LeaveTypeNotAvailableException;
@@ -70,13 +67,13 @@ public class LeaveServiceImpl implements LeaveService{
         LocalDate localDate1 = user.getDateOfJoining().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         LocalDate localDate2 = new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
         int days = (int) ChronoUnit.DAYS.between(localDate1, localDate2);
-        if("Earned".equals(leave.getType())){
+        if("earned-leave".equals(leave.getType())){
             user.setEarnedLeaveLeft(user.getEarnedLeaveLeft()-days);
         }
-        else if("Sick".equals(leave.getType())){
+        else if("sick-leave".equals(leave.getType())){
             user.setSickLeaveLeft(user.getSickLeaveLeft()-days);
         }
-        else if("Paternity".equals(leave.getType())){
+        else if("paternity-leave".equals(leave.getType())){
             user.setPaternityLeaveLeft(user.getPaternityLeaveLeft()-days);
         }
         emailService.send(
@@ -94,8 +91,47 @@ public class LeaveServiceImpl implements LeaveService{
     public List<UpcomingTimeOffDTO> getUsersUpcomingTimeOff(HttpServletRequest request) {
         User user = userService.getUserFromJwt(request.getHeader("Authorization").substring(7));
         List<AppliedLeave> leaves = user.getAppliedLeaves();
-        System.out.println(leaves.stream().filter(i->i.getFromDate().after(new Date())));
-        return leaves.stream().filter(i->i.getFromDate().after(new Date())).map(this::maptoUpcomingTimeOffDTO).toList();
+        return leaves.stream()
+                .filter(
+                        leave->leave.getFromDate().after(new Date())&&leave.isApproved())
+                .map(this::maptoUpcomingTimeOffDTO)
+                .toList();
+    }
+
+    @Override
+    public List<GetUserUnapprovedLeavesDTO> getUserLeaves(HttpServletRequest request) {
+        User user = userService.getUserFromJwt(request.getHeader("Authorization").substring(7));
+        List<AppliedLeave> leaves = user.getAppliedLeaves();
+        return leaves.stream().filter(
+                        leave->leave.getFromDate().after(new Date())&&!leave.isApproved())
+                .map(this::mapToGetUserUnapprovedLeavesDTO)
+                .toList();
+
+    }
+
+    @Override
+    public void updateLeave(GetUserUnapprovedLeavesDTO getUserUnapprovedLeavesDTO) {
+        AppliedLeave leave = leavesRepo.findById(getUserUnapprovedLeavesDTO.getId());
+        leave.setFromDate(getUserUnapprovedLeavesDTO.getFromDate());
+        leave.setToDate(getUserUnapprovedLeavesDTO.getToDate());
+        leave.setNote(getUserUnapprovedLeavesDTO.getNote());
+        leave.setType(getUserUnapprovedLeavesDTO.getTypeOfLeave());
+        leavesRepo.save(leave);
+    }
+
+    @Override
+    public void deleteLeave(int id) {
+        leavesRepo.delete(leavesRepo.findById(id));
+    }
+
+    private GetUserUnapprovedLeavesDTO mapToGetUserUnapprovedLeavesDTO(AppliedLeave leave) {
+        return GetUserUnapprovedLeavesDTO.builder()
+                .id(leave.getId())
+                .typeOfLeave(leave.getType())
+                .toDate(leave.getToDate())
+                .note(leave.getNote())
+                .fromDate(leave.getFromDate())
+                .build();
     }
 
     private UpcomingTimeOffDTO maptoUpcomingTimeOffDTO(AppliedLeave i) {

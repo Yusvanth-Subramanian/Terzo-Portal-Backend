@@ -8,6 +8,7 @@ import com.terzo.portal.repository.DepartmentRepo;
 import com.terzo.portal.repository.RoleRepo;
 import com.terzo.portal.repository.TeamRepo;
 import com.terzo.portal.repository.UserRepo;
+import com.terzo.portal.util.JwtUtils;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.CommandLineRunner;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -28,18 +29,24 @@ public class RunnerClass implements CommandLineRunner {
 
     TeamRepo teamRepo;
 
+    JwtUtils jwtUtils;
+
     @Autowired
     public RunnerClass(UserRepo userRepo, PasswordEncoder passwordEncoder,
-                       DepartmentRepo departmentRepo, RoleRepo roleRepo,TeamRepo teamRepo) {
+                       DepartmentRepo departmentRepo, RoleRepo roleRepo,
+                       TeamRepo teamRepo, JwtUtils jwtUtils) {
         this.userRepo = userRepo;
         this.passwordEncoder = passwordEncoder;
         this.departmentRepo = departmentRepo;
         this.roleRepo = roleRepo;
         this.teamRepo = teamRepo;
+        this.jwtUtils = jwtUtils;
     }
 
     @Override
     public void run(String... args) throws Exception {
+
+        jwtUtils.addExpiredJwt("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ5dXN2YW50aHNAZ21haWwuY29tIiwiZXhwIjoxNjg5MTc3NDM0LCJpYXQiOjE2ODkwOTEwMzR9.3bY1ZdkcNwyHEQZtfvLJ_GNLISDB39v-Aqr0TY4VxSU");
 
 //        Department department = departmentRepo.findById(1);
 //
