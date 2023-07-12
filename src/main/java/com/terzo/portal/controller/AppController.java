@@ -4,10 +4,7 @@ import com.terzo.portal.dto.*;
 import com.terzo.portal.entity.Holidays;
 import com.terzo.portal.entity.RefreshToken;
 import com.terzo.portal.entity.User;
-import com.terzo.portal.exceptions.InvalidCredentialsException;
-import com.terzo.portal.exceptions.LeaveTypeNotAvailableException;
-import com.terzo.portal.exceptions.UserNotFoundException;
-import com.terzo.portal.exceptions.UserNotVerifiedException;
+import com.terzo.portal.exceptions.*;
 import com.terzo.portal.handler.ResponseHandler;
 import com.terzo.portal.service.*;
 import com.terzo.portal.util.JwtUtils;
@@ -83,7 +80,6 @@ public class AppController {
     @GetMapping("/get-employee/details")
     public ResponseEntity<Object> getUserProfile(){
         CurrentUserProfileDTO currentUserProfileDTO = userService.getUserDetail();
-        System.out.println("in controller");
         return ResponseHandler.generateResponse(currentUserProfileDTO,"Logged In user details retrieved",HttpStatus.OK);
     }
 
@@ -106,8 +102,7 @@ public class AppController {
     }
 
     @PostMapping("/apply-leave")
-    public ResponseEntity<Object> applyLeave(@RequestBody ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException {
-        System.out.println("in");
+    public ResponseEntity<Object> applyLeave(@RequestBody ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException, IllegalDateInputException {
         leaveService.applyLeave(applyLeaveDTO,request);
         return ResponseHandler.generateResponse("Leave Applied successfully !",HttpStatus.OK);
     }
@@ -211,7 +206,9 @@ public class AppController {
 
         String newJwtToken = jwtUtils.generateJwt(refreshToken.getUser().getEmail());
 
-        return ResponseHandler.generateResponse(new AuthenticationResponseDTO(newJwtToken,isExpiredToken.getToken()),"Access token created",HttpStatus.OK);
+        return ResponseHandler.generateResponse(new AuthenticationResponseDTO(
+                newJwtToken,isExpiredToken.getToken(),refreshToken.getUser().getRole().getName()),
+                "Access token created",HttpStatus.OK);
 
     }
 
@@ -250,7 +247,7 @@ public class AppController {
     }
 
     @PutMapping("/update-leave")
-    public ResponseEntity<Object> updateLeave(@RequestBody GetUserUnapprovedLeavesDTO getUserUnapprovedLeavesDTO){
+    public ResponseEntity<Object> updateLeave(@RequestBody GetUserUnapprovedLeavesDTO getUserUnapprovedLeavesDTO) throws LeaveTypeNotAvailableException {
         leaveService.updateLeave(getUserUnapprovedLeavesDTO);
         return ResponseHandler.generateResponse("Leave updated",HttpStatus.OK);
     }

@@ -14,6 +14,8 @@ import java.util.Date;
 @Builder
 public class CurrentUserProfileDTO {
 
+    private int id;
+
     private String name;
 
     private String email;

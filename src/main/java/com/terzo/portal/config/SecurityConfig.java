@@ -45,7 +45,6 @@ public class SecurityConfig {
                         .requestMatchers("/delete-user").hasAnyAuthority("MANAGER","HR")
                         .requestMatchers("get-unapproved-leaves").hasAnyAuthority("MANAGER","HR")
                         .requestMatchers("/save-user").hasAnyAuthority("MANAGER","HR")
-                        .requestMatchers("/get-employee/details").hasAuthority("MANAGER")
                         .requestMatchers("/update-user").hasAnyAuthority("MANAGER","HR")
                         .requestMatchers("/add-holiday").hasAnyAuthority("MANAGER","HR")
                         .requestMatchers("/generate-otp").permitAll()

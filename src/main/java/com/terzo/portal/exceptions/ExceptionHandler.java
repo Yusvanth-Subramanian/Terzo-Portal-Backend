@@ -32,4 +32,9 @@ public class ExceptionHandler {
     public ResponseEntity<Object> expiredJwtException(){
         return ResponseHandler.generateResponse("Invalid JWT Token",HttpStatus.BAD_REQUEST);
     }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(IllegalDateInputException.class)
+    public ResponseEntity<Object> illegalDateInputException(){
+        return ResponseHandler.generateResponse("From date is after To date",HttpStatus.BAD_REQUEST);
+    }
 }

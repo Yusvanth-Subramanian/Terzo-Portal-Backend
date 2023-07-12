@@ -3,6 +3,7 @@ package com.terzo.portal.service;
 import com.terzo.portal.dto.*;
 import com.terzo.portal.entity.AppliedLeave;
 import com.terzo.portal.entity.User;
+import com.terzo.portal.exceptions.IllegalDateInputException;
 import com.terzo.portal.exceptions.LeaveTypeNotAvailableException;
 import com.terzo.portal.repository.LeavesRepo;
 import jakarta.servlet.http.HttpServletRequest;
@@ -40,16 +41,19 @@ public class LeaveServiceImpl implements LeaveService{
     }
 
     @Override
-    public void applyLeave(ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException {
+    public void applyLeave(ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException, IllegalDateInputException {
         AppliedLeave leave = new AppliedLeave();
+        if(applyLeaveDTO.getToDate().before(applyLeaveDTO.getFromDate())
+                ||applyLeaveDTO.getNote()==null||applyLeaveDTO.getTypeOfLeave()==null){
+            throw new IllegalDateInputException();
+        }
         User user = userService.getUserFromJwt(request.getHeader("Authorization").substring(7));
-        LocalDate localDate1 = user.getDateOfJoining().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate localDate2 = new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        int days = (int) ChronoUnit.DAYS.between(localDate1, localDate2);
-
-        if(("Earned".equals(applyLeaveDTO.getTypeOfLeave())&&user.getEarnedLeaveLeft()-days<0)||
-                ("Sick".equals(applyLeaveDTO.getTypeOfLeave())&&user.getSickLeaveLeft()-days<0)||
-                ("Paternity".equals(applyLeaveDTO.getTypeOfLeave())&&user.getPaternityLeaveLeft()-days<0)
+        LocalDate localDate1 = applyLeaveDTO.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate localDate2 = applyLeaveDTO.getToDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        int days = (int) ChronoUnit.DAYS.between(localDate2, localDate1)*-1;
+        if(("earned-leave".equals(applyLeaveDTO.getTypeOfLeave())&&user.getEarnedLeaveLeft()-days<=0)||
+                ("sick-leave".equals(applyLeaveDTO.getTypeOfLeave())&&user.getSickLeaveLeft()-days<=0)||
+                ("paternity-leave".equals(applyLeaveDTO.getTypeOfLeave())&&user.getPaternityLeaveLeft()-days<=0)
         ){
             throw new LeaveTypeNotAvailableException();
         }
@@ -63,10 +67,11 @@ public class LeaveServiceImpl implements LeaveService{
     public void approveLeave(int id,HttpServletRequest request) {
         AppliedLeave leave = leavesRepo.findById(id);
         leave.setApproved(true);
-        User user = userService.getUserFromJwt(request.getHeader("Authorization").substring(7));
-        LocalDate localDate1 = user.getDateOfJoining().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate localDate2 = new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        int days = (int) ChronoUnit.DAYS.between(localDate1, localDate2);
+        System.out.println(leave.getUser().getEmail());
+        User user = leave.getUser();
+        LocalDate localDate1 = leave.getToDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate localDate2 = leave.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        int days = (int) ChronoUnit.DAYS.between(localDate1, localDate2)*-1;
         if("earned-leave".equals(leave.getType())){
             user.setEarnedLeaveLeft(user.getEarnedLeaveLeft()-days);
         }
@@ -76,11 +81,13 @@ public class LeaveServiceImpl implements LeaveService{
         else if("paternity-leave".equals(leave.getType())){
             user.setPaternityLeaveLeft(user.getPaternityLeaveLeft()-days);
         }
+        String approvedBy = userService.getUserFromJwt(request.getHeader("Authorization").substring(7)).getName();
+
         emailService.send(
                 EmailDTO.builder()
                         .to(user.getEmail())
                         .subject("Update on your leave request")
-                        .body("Your leave request has been approved!")
+                        .body("Your leave request has been approved by "+approvedBy)
                         .build()
         );
         userService.updateChanges(user);
@@ -110,8 +117,18 @@ public class LeaveServiceImpl implements LeaveService{
     }
 
     @Override
-    public void updateLeave(GetUserUnapprovedLeavesDTO getUserUnapprovedLeavesDTO) {
+    public void updateLeave(GetUserUnapprovedLeavesDTO getUserUnapprovedLeavesDTO) throws LeaveTypeNotAvailableException {
         AppliedLeave leave = leavesRepo.findById(getUserUnapprovedLeavesDTO.getId());
+        LocalDate localDate1 = leave.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate localDate2 = leave.getToDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        int days = (int) ChronoUnit.DAYS.between(localDate2, localDate1)*-1;
+        User user = leave.getUser();
+        if(("earned-leave".equals(leave.getType())&&user.getEarnedLeaveLeft()-days<=0)||
+                ("sick-leave".equals(leave.getType())&&user.getSickLeaveLeft()-days<=0)||
+                ("paternity-leave".equals(leave.getType())&&user.getPaternityLeaveLeft()-days<=0)
+        ){
+            throw new LeaveTypeNotAvailableException();
+        }
         leave.setFromDate(getUserUnapprovedLeavesDTO.getFromDate());
         leave.setToDate(getUserUnapprovedLeavesDTO.getToDate());
         leave.setNote(getUserUnapprovedLeavesDTO.getNote());

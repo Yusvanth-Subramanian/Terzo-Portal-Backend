@@ -42,6 +42,7 @@ public class LoginService {
                     .builder()
                     .jwt(jwtUtils.generateJwt(loginDTO.getEmail()))
                     .refreshToken(refreshTokenService.createRefreshToken(user.getId()).getToken())
+                    .userRole(user.getRole().getName())
                     .build();
         }
         catch (Exception e){
