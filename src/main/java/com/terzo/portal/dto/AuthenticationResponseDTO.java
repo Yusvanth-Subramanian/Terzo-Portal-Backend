@@ -15,5 +15,5 @@ public class AuthenticationResponseDTO {
 
     private String refreshToken;
 
-    private String userRole;
+    private String userRoles;
 }

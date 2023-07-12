@@ -13,6 +13,8 @@ import java.util.Date;
 @Builder
 public class ListUserDetailsDTO {
 
+    private int id;
+
     private String name;
 
     private String designation;
@@ -20,4 +22,12 @@ public class ListUserDetailsDTO {
     private String department;
 
     private Date joiningDate;
+
+    private String email;
+
+    private long mobileNumber;
+
+    private String address;
+
+    private Date dateOfBirth;
 }

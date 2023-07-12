@@ -44,6 +44,8 @@ public class UserServiceImpl implements UserService{
 
     AuthenticationManager authenticationManager;
 
+    RefreshTokenService refreshTokenService;
+
     Map<String,Integer> emailToOtp = new HashMap<>();
 
     List<String> verifiedUsers = new ArrayList<>();
@@ -51,7 +53,8 @@ public class UserServiceImpl implements UserService{
     @Autowired
     public UserServiceImpl(TeamService teamService,UserRepo userRepo, DepartmentService departmentService,
                            RoleService roleService,JwtUtils jwtUtils,EmailService emailService,
-                           PasswordEncoder passwordEncoder,AuthenticationManager authenticationManager) {
+                           PasswordEncoder passwordEncoder
+            ,AuthenticationManager authenticationManager,RefreshTokenService refreshTokenService) {
         this.userRepo = userRepo;
         this.departmentService = departmentService;
         this.roleService = roleService;
@@ -60,6 +63,7 @@ public class UserServiceImpl implements UserService{
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
+        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -111,6 +115,8 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public void deleteUser(int id) {
+        //System.out.println(userRepo.findById(id).getRefreshToken().getToken());
+        //refreshTokenService.delete(userRepo.findById(id).getRefreshToken());
         userRepo.deleteById(id);
     }
 
@@ -233,7 +239,12 @@ public class UserServiceImpl implements UserService{
     @Override
     public void update(UpdateUserDTO updateUserDTO) {
         User user = userRepo.findById(updateUserDTO.getId());
-        BeanUtils.copyProperties(updateUserDTO,user);
+        user.setActive(updateUserDTO.isActive());
+        user.setName(updateUserDTO.getName());
+        user.setDesignation(updateUserDTO.getDesignation());
+        user.setMobileNumber(updateUserDTO.getMobileNumber());
+        user.setAddress(updateUserDTO.getAddress());
+        user.setEmail(updateUserDTO.getEmail());
         user.setRole(roleService.getRoleById(updateUserDTO.getRoleId()));
         user.setDepartment(departmentService.getDepartmentById(updateUserDTO.getDepartmentId()));
         user.setTeam(teamService.getTeamById(updateUserDTO.getTeamId()));
@@ -279,11 +290,10 @@ public class UserServiceImpl implements UserService{
     }
 
     private ListUserDetailsDTO mapToListUserDetailsDTO(User user) {
-        return ListUserDetailsDTO.builder()
-                .department(user.getDepartment().getName())
-                .designation(user.getDesignation())
-                .name(user.getName())
-                .joiningDate(user.getDateOfJoining())
-                .build();
+        ListUserDetailsDTO listUserDetailsDTO = new ListUserDetailsDTO();
+        BeanUtils.copyProperties(user,listUserDetailsDTO);
+        listUserDetailsDTO.setDepartment(user.getDepartment().getName());
+        listUserDetailsDTO.setJoiningDate(user.getDateOfJoining());
+        return listUserDetailsDTO;
     }
 }

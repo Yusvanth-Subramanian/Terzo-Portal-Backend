@@ -85,6 +85,7 @@ public class AppController {
 
     @DeleteMapping("/delete-user")
     public ResponseEntity<Object> deleteUser(@RequestParam("id")int id){
+        System.out.println(id);
         userService.deleteUser(id);
         return ResponseHandler.generateResponse("User deleted",HttpStatus.OK);
     }

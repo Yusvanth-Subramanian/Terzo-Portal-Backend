@@ -61,4 +61,5 @@ public class User {
 
     @ManyToOne
     private Team team;
+
 }
