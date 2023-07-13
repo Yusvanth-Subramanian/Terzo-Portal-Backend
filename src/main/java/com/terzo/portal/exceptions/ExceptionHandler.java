@@ -33,8 +33,18 @@ public class ExceptionHandler {
         return ResponseHandler.generateResponse("Invalid JWT Token",HttpStatus.BAD_REQUEST);
     }
 
-    @org.springframework.web.bind.annotation.ExceptionHandler(IllegalDateInputException.class)
-    public ResponseEntity<Object> illegalDateInputException(){
+    @org.springframework.web.bind.annotation.ExceptionHandler(AllFieldsRequiredException.class)
+    public ResponseEntity<Object> allFieldsRequiredException(){
         return ResponseHandler.generateResponse("From date is after To date",HttpStatus.BAD_REQUEST);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(SelfDeletionException.class)
+    public ResponseEntity<Object> selfDeletionException(){
+        return ResponseHandler.generateResponse("You cannot delete your account while you are logged in",HttpStatus.BAD_REQUEST);
+    }
+
+    @org.springframework.web.bind.annotation.ExceptionHandler(UserWithThisEmailAlreadyExistsException.class)
+    public ResponseEntity<Object> userWithThisEmailAlreadyExistsException(){
+        return ResponseHandler.generateResponse("Try with different email",HttpStatus.CONFLICT);
     }
 }

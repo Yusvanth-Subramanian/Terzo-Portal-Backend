@@ -56,7 +56,7 @@ public class User {
     @ManyToOne
     private Role role;
 
-    @OneToMany(mappedBy = "user")
+    @OneToMany(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<AppliedLeave> appliedLeaves;
 
     @ManyToOne

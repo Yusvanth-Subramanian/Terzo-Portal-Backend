@@ -1,13 +1,11 @@
 package com.terzo.portal.service;
 
+import java.lang.reflect.Field;
 import com.terzo.portal.dto.*;
 import com.terzo.portal.entity.AppliedLeave;
 import com.terzo.portal.entity.Team;
 import com.terzo.portal.entity.User;
-import com.terzo.portal.exceptions.InvalidCredentialsException;
-import com.terzo.portal.exceptions.SelfDeletionException;
-import com.terzo.portal.exceptions.UserNotFoundException;
-import com.terzo.portal.exceptions.UserNotVerifiedException;
+import com.terzo.portal.exceptions.*;
 import com.terzo.portal.repository.UserRepo;
 import com.terzo.portal.util.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -68,7 +66,14 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public void save(RegisterDTO registerDTO) {
+    public void save(RegisterDTO registerDTO) throws IllegalAccessException, AllFieldsRequiredException, UserWithThisEmailAlreadyExistsException {
+
+        if(hasNullAttribute(registerDTO)){
+            throw new AllFieldsRequiredException();
+        }
+        if(userRepo.findByEmail(registerDTO.getEmail())!=null){
+            throw new UserWithThisEmailAlreadyExistsException();
+        }
         User user = new User();
         BeanUtils.copyProperties(registerDTO,user);
         user.setDepartment(departmentService.getDepartmentById(registerDTO.getDepartmentId()));
@@ -82,7 +87,35 @@ public class UserServiceImpl implements UserService{
         user.setProfilePicUrl("");
         user.setTeam(teamService.getTeamById(registerDTO.getTeamId()));
         userRepo.save(user);
+        emailService.send(
+                EmailDTO.builder()
+                        .to(user.getEmail())
+                        .subject("Welcome to Terzo Portal")
+                        .body("Your Terzo portal account has been opened you can access it with below credentials \n\n" +
+                                "Email : "+user.getEmail()+"\n" +
+                                "Password : "+registerDTO.getPasswordForUser())
+                        .build()
+        );
     }
+
+    private boolean hasNullAttribute(RegisterDTO registerDTO) throws IllegalAccessException {
+
+        for (Field field : registerDTO.getClass().getDeclaredFields()) {
+            field.setAccessible(true);
+            Object obj = field.get(registerDTO);
+            if (obj == null) {
+                return true;
+            }
+            if (obj instanceof String && ((String) obj).isEmpty()) {
+                return true;
+            }
+            if (obj instanceof Integer && ((Integer) obj) == 0) {
+                return true;
+            }
+        }
+        return false;
+    }
+
 
     @Override
     public User findByEmail(String email) {
@@ -239,9 +272,22 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public void update(UpdateUserDTO updateUserDTO) {
+    public void update(UpdateUserDTO updateUserDTO) throws AllFieldsRequiredException {
+        if(updateUserDTO.getEmployeeType()==null||
+           updateUserDTO.getRoleId()==0||
+           updateUserDTO.getDepartmentId()==0||
+           updateUserDTO.getTeamId()==0||
+           updateUserDTO.getReportsTo()==0){
+            throw new AllFieldsRequiredException();
+        }
         User user = userRepo.findById(updateUserDTO.getId());
-        user.setActive(updateUserDTO.isActive());
+        if(updateUserDTO.getActiveStatus().equals("true")){
+            user.setActive(true);
+        }
+        else{
+            user.setActive(false);
+        }
+        user.setReportsTo(updateUserDTO.getReportsTo());
         user.setName(updateUserDTO.getName());
         user.setDesignation(updateUserDTO.getDesignation());
         user.setMobileNumber(updateUserDTO.getMobileNumber());
@@ -268,6 +314,23 @@ public class UserServiceImpl implements UserService{
                         user.getDateOfBirth().getTime()-new Date().getTime()<=7
                         && user.getDateOfBirth().getTime()-new Date().getTime()>=0
                 ).map(this::mapToBirthDayBuddiesDtoBuilder).toList();
+    }
+
+    @Override
+    public List<GetManagersResponseDTO> getManagers() {
+        List<User> users = userRepo.findAll();
+        return users.stream()
+                .filter(user -> user.getRole().getName().equals("MANAGER"))
+                .map(this::mapUserGetManagerResponseDTO)
+                .toList();
+    }
+
+    private GetManagersResponseDTO mapUserGetManagerResponseDTO(User user) {
+        return GetManagersResponseDTO
+                .builder()
+                .id(user.getId())
+                .name(user.getName())
+                .build();
     }
 
     private BirthDayBuddiesDTO mapToBirthDayBuddiesDtoBuilder(User user) {

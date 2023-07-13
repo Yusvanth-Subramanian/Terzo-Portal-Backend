@@ -90,19 +90,19 @@ public class AppController {
     }
 
     @GetMapping("/get-unapproved-leaves")
-    public ResponseEntity<Object> getAppliedLeaves(){
-        List<LeavesYetToBeApprovedDTO> leaves = leaveService.getAllPendingLeaveRequests();
+    public ResponseEntity<Object> getAppliedLeaves(HttpServletRequest request){
+        List<LeavesYetToBeApprovedDTO> leaves = leaveService.getAllPendingLeaveRequests(request);
         return ResponseHandler.generateResponse(leaves,"Leavese that are yet to be approved are retrieved",HttpStatus.OK);
     }
 
     @PostMapping("/save-user")
-    public ResponseEntity<Object> saveUser(@RequestBody RegisterDTO registerDTO){
+    public ResponseEntity<Object> saveUser(@RequestBody RegisterDTO registerDTO) throws IllegalAccessException, AllFieldsRequiredException, UserWithThisEmailAlreadyExistsException {
         userService.save(registerDTO);
         return ResponseHandler.generateResponse("User saved",HttpStatus.OK);
     }
 
     @PostMapping("/apply-leave")
-    public ResponseEntity<Object> applyLeave(@RequestBody ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException, IllegalDateInputException {
+    public ResponseEntity<Object> applyLeave(@RequestBody ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException, AllFieldsRequiredException {
         leaveService.applyLeave(applyLeaveDTO,request);
         return ResponseHandler.generateResponse("Leave Applied successfully !",HttpStatus.OK);
     }
@@ -219,7 +219,7 @@ public class AppController {
     }
 
     @PutMapping("/update-user")
-    public ResponseEntity<Object> update(@RequestBody UpdateUserDTO updateUserDTO){
+    public ResponseEntity<Object> update(@RequestBody UpdateUserDTO updateUserDTO) throws AllFieldsRequiredException {
         userService.update(updateUserDTO);
         return ResponseHandler.generateResponse("User Updated",HttpStatus.OK);
     }
@@ -256,6 +256,19 @@ public class AppController {
     public ResponseEntity<Object> deleteLeave(@PathVariable("id")int id){
         leaveService.deleteLeave(id);
         return ResponseHandler.generateResponse("Leave deleted",HttpStatus.OK);
+    }
+
+    @GetMapping("/get-managers")
+    public ResponseEntity<Object> getListOfManagers(){
+        return ResponseHandler.generateResponse(
+                userService.getManagers(),"Managers names retrieved",HttpStatus.OK
+        );
+    }
+
+    @DeleteMapping("/disapprove-leave")
+    public ResponseEntity<Object> disapproveLeave(@RequestParam("id")int id){
+        leaveService.disapprove(id);
+        return ResponseHandler.generateResponse("Leave disapproved",HttpStatus.OK);
     }
 
 }

@@ -2,17 +2,14 @@ package com.terzo.portal.service;
 
 import com.terzo.portal.dto.*;
 import com.terzo.portal.entity.User;
-import com.terzo.portal.exceptions.InvalidCredentialsException;
-import com.terzo.portal.exceptions.SelfDeletionException;
-import com.terzo.portal.exceptions.UserNotFoundException;
-import com.terzo.portal.exceptions.UserNotVerifiedException;
+import com.terzo.portal.exceptions.*;
 import jakarta.servlet.http.HttpServletRequest;
 
 import java.util.List;
 
 public interface UserService {
 
-    void save(RegisterDTO registerDTO);
+    void save(RegisterDTO registerDTO) throws IllegalAccessException, AllFieldsRequiredException, UserWithThisEmailAlreadyExistsException;
 
     User findByEmail(String email);
 
@@ -38,9 +35,11 @@ public interface UserService {
 
     void changePassword(ChangePasswordDTO changePasswordDTO) throws UserNotVerifiedException, UserNotFoundException, InvalidCredentialsException;
 
-    void update(UpdateUserDTO updateUserDTO);
+    void update(UpdateUserDTO updateUserDTO) throws AllFieldsRequiredException;
 
     void updateLoggedInUserDetails(UpdateLoggedInUserDTO loggedInUserDTO);
 
     List<BirthDayBuddiesDTO> getBirthdayBuddies();
+
+    List<GetManagersResponseDTO> getManagers();
 }

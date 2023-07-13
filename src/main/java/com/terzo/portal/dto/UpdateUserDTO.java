@@ -23,7 +23,7 @@ public class UpdateUserDTO {
 
     private Date dateOfBirth;
 
-    private boolean Active;
+    private String activeStatus;
 
     private int departmentId;
 

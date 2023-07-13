@@ -3,7 +3,7 @@ package com.terzo.portal.service;
 import com.terzo.portal.dto.*;
 import com.terzo.portal.entity.AppliedLeave;
 import com.terzo.portal.entity.User;
-import com.terzo.portal.exceptions.IllegalDateInputException;
+import com.terzo.portal.exceptions.AllFieldsRequiredException;
 import com.terzo.portal.exceptions.LeaveTypeNotAvailableException;
 import com.terzo.portal.repository.LeavesRepo;
 import jakarta.servlet.http.HttpServletRequest;
@@ -33,19 +33,21 @@ public class LeaveServiceImpl implements LeaveService{
     }
 
     @Override
-    public List<LeavesYetToBeApprovedDTO> getAllPendingLeaveRequests() {
+    public List<LeavesYetToBeApprovedDTO> getAllPendingLeaveRequests(HttpServletRequest request) {
+        User user = userService.getUserFromJwt(request.getHeader("Authorization").substring(7));
         return leavesRepo.findByApproved(false)
                 .stream()
+                .filter(leave -> !leave.getUser().getEmail().equals(user.getEmail()))
                 .map(this::mapToLeavesYetToBeApproved)
                 .toList();
     }
 
     @Override
-    public void applyLeave(ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException, IllegalDateInputException {
+    public void applyLeave(ApplyLeaveDTO applyLeaveDTO, HttpServletRequest request) throws LeaveTypeNotAvailableException, AllFieldsRequiredException {
         AppliedLeave leave = new AppliedLeave();
         if(applyLeaveDTO.getToDate().before(applyLeaveDTO.getFromDate())
                 ||applyLeaveDTO.getNote()==null||applyLeaveDTO.getTypeOfLeave()==null){
-            throw new IllegalDateInputException();
+            throw new AllFieldsRequiredException();
         }
         User user = userService.getUserFromJwt(request.getHeader("Authorization").substring(7));
         LocalDate localDate1 = applyLeaveDTO.getFromDate().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
@@ -139,6 +141,20 @@ public class LeaveServiceImpl implements LeaveService{
     @Override
     public void deleteLeave(int id) {
         leavesRepo.delete(leavesRepo.findById(id));
+    }
+
+    @Override
+    public void disapprove(int id) {
+        emailService.send(
+                EmailDTO.builder()
+                        .to(leavesRepo.findById(id).getUser().getEmail())
+                        .subject("Regarding your leave Request")
+                        .body("We are sorry to inform you that your request with note"
+                                +leavesRepo.findById(id).getNote()
+                                +" has been disapproved")
+                        .build()
+        );
+        deleteLeave(id);
     }
 
     private GetUserUnapprovedLeavesDTO mapToGetUserUnapprovedLeavesDTO(AppliedLeave leave) {
