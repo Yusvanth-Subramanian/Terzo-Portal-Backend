@@ -5,6 +5,7 @@ import com.terzo.portal.entity.AppliedLeave;
 import com.terzo.portal.entity.Team;
 import com.terzo.portal.entity.User;
 import com.terzo.portal.exceptions.InvalidCredentialsException;
+import com.terzo.portal.exceptions.SelfDeletionException;
 import com.terzo.portal.exceptions.UserNotFoundException;
 import com.terzo.portal.exceptions.UserNotVerifiedException;
 import com.terzo.portal.repository.UserRepo;
@@ -114,9 +115,10 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public void deleteUser(int id) {
-        //System.out.println(userRepo.findById(id).getRefreshToken().getToken());
-        //refreshTokenService.delete(userRepo.findById(id).getRefreshToken());
+    public void deleteUser(int id,HttpServletRequest request) throws SelfDeletionException {
+        if(id==getUserFromJwt(request.getHeader("Authorization").substring(7)).getId()){
+            throw new SelfDeletionException();
+        }
         userRepo.deleteById(id);
     }
 

@@ -3,6 +3,7 @@ package com.terzo.portal.service;
 import com.terzo.portal.dto.*;
 import com.terzo.portal.entity.User;
 import com.terzo.portal.exceptions.InvalidCredentialsException;
+import com.terzo.portal.exceptions.SelfDeletionException;
 import com.terzo.portal.exceptions.UserNotFoundException;
 import com.terzo.portal.exceptions.UserNotVerifiedException;
 import jakarta.servlet.http.HttpServletRequest;
@@ -19,7 +20,7 @@ public interface UserService {
 
     CurrentUserProfileDTO getUserDetail();
 
-    void deleteUser(int id);
+    void deleteUser(int id,HttpServletRequest request) throws SelfDeletionException;
 
     User getUserFromJwt(String jwt);
 

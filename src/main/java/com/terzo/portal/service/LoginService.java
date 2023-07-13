@@ -2,6 +2,7 @@ package com.terzo.portal.service;
 
 import com.terzo.portal.dto.AuthenticationResponseDTO;
 import com.terzo.portal.dto.LoginDTO;
+import com.terzo.portal.entity.RefreshToken;
 import com.terzo.portal.entity.User;
 import com.terzo.portal.repository.UserRepo;
 import com.terzo.portal.util.JwtUtils;

@@ -84,9 +84,8 @@ public class AppController {
     }
 
     @DeleteMapping("/delete-user")
-    public ResponseEntity<Object> deleteUser(@RequestParam("id")int id){
-        System.out.println(id);
-        userService.deleteUser(id);
+    public ResponseEntity<Object> deleteUser(@RequestParam("id")int id,HttpServletRequest request) throws SelfDeletionException {
+        userService.deleteUser(id,request);
         return ResponseHandler.generateResponse("User deleted",HttpStatus.OK);
     }
 

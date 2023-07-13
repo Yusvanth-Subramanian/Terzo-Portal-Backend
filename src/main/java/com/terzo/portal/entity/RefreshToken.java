@@ -23,8 +23,8 @@ public class RefreshToken {
 
     private Date expiryDate;
 
-    @OneToOne
-    @JoinColumn(name = "user_id", referencedColumnName = "id")
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "user_id")
     private User user;
 
 }

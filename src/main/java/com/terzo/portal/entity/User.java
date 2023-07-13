@@ -62,4 +62,7 @@ public class User {
     @ManyToOne
     private Team team;
 
+    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
+    private RefreshToken refreshToken;
+
 }
