@@ -14,6 +14,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -128,12 +129,23 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public List<ListUserDetailsDTO> getEmployees(int start,int end) {
-        Pageable paging = PageRequest.of(start,end);
-        Page<User> list = userRepo.findAll(paging);
-        if(list.hasContent()){
-            return list.stream().map(this::mapToListUserDetailsDTO).toList();
+    public List<ListUserDetailsDTO> getEmployees(int start,int end,String type,String query) {
+        if(type.equals("null")||query.equals("null")){
+            Pageable paging = PageRequest.of(start,end);
+            Page<User> list = userRepo.findAll(paging);
+
+                if (list.hasContent()) {
+                    return list.stream().map(this::mapToListUserDetailsDTO).toList();
+                }
         }
+        Page<User> users = userRepo.findAll(PageRequest.of(start,end,
+                Sort.by(Sort.Direction.valueOf(type),query)));
+
+                if(users.hasContent()){
+                    return users.stream()
+                            .map(this::mapToListUserDetailsDTO).toList();
+                }
+
         return new ArrayList<>();
     }
 
