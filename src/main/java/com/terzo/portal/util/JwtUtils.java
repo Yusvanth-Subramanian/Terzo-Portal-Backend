@@ -76,7 +76,4 @@ public class JwtUtils {
         }
     }
 
-    public void addExpiredJwt(String jwt){
-        blackedJwt.add(jwt);
-    }
 }

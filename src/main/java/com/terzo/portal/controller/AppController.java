@@ -33,18 +33,20 @@ public class AppController {
 
     JwtUtils jwtUtils;
 
+    RoleService roleService;
+
     @Autowired
     public AppController(DepartmentService departmentService,UserService userService,
                          LoginService loginService, LeaveService leaveService,
                          HolidayService holidayService, TeamService teamService,
-                         JwtUtils jwtUtils) {
+                         JwtUtils jwtUtils,RoleService roleService) {
         this.userService = userService;
         this.loginService = loginService;
         this.leaveService = leaveService;
         this.holidayService = holidayService;
         this.teamService = teamService;
         this.departmentService = departmentService;
-
+        this.roleService = roleService;
         this.jwtUtils = jwtUtils;
     }
 
@@ -252,6 +254,13 @@ public class AppController {
     @GetMapping("/get-total-users")
     public ResponseEntity<Object> getTotalUsers(){
         return ResponseHandler.generateResponse(userService.getTotalUsers(),"Total users retrieved",HttpStatus.OK);
+    }
+
+    @GetMapping("/get-all-roles")
+    public ResponseEntity<Object> getAllRoles(){
+        return ResponseHandler.generateResponse(
+                roleService.getRoles(),"Roles retrieved",HttpStatus.OK
+        );
     }
 
 }

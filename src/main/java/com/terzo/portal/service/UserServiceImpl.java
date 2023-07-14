@@ -27,7 +27,6 @@ import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.TimeUnit;
-import java.util.stream.Stream;
 
 @Service
 public class UserServiceImpl implements UserService{
@@ -93,14 +92,19 @@ public class UserServiceImpl implements UserService{
                 EmailDTO.builder()
                         .to(user.getEmail())
                         .subject("Welcome to Terzo Portal")
-                        .body("Your Terzo portal account has been opened you . Activate it using the below link \n\n" +
-                                "http://localhost:4200/activate-account")
+                        .body("""
+                                Your Terzo portal account has been opened you . Activate it using the below link\s
+
+                                http://localhost:4200/activate-account""")
                         .build()
         );
     }
 
     private boolean hasNullAttribute(RegisterDTO registerDTO) throws IllegalAccessException {
 
+        if(registerDTO.getMobileNumber()==0){
+            return true;
+        }
         for (Field field : registerDTO.getClass().getDeclaredFields()) {
             field.setAccessible(true);
             Object obj = field.get(registerDTO);
@@ -285,12 +289,7 @@ public class UserServiceImpl implements UserService{
             throw new AllFieldsRequiredException();
         }
         User user = userRepo.findById(updateUserDTO.getId());
-        if(updateUserDTO.getActiveStatus().equals("true")){
-            user.setActive(true);
-        }
-        else{
-            user.setActive(false);
-        }
+        user.setActive(updateUserDTO.getActiveStatus().equals("true"));
         user.setReportsTo(updateUserDTO.getReportsTo());
         user.setName(updateUserDTO.getName());
         user.setDesignation(updateUserDTO.getDesignation());
@@ -342,7 +341,7 @@ public class UserServiceImpl implements UserService{
 
     @Override
     public String getTotalUsers() {
-        return userRepo.count()+"";
+        return String.valueOf(userRepo.count());
     }
 
     private GetManagersResponseDTO mapUserGetManagerResponseDTO(User user) {
