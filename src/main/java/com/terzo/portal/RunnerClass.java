@@ -46,14 +46,21 @@ public class RunnerClass implements CommandLineRunner {
     @Override
     public void run(String... args) throws Exception {
 
-        jwtUtils.addExpiredJwt("eyJhbGciOiJIUzI1NiJ9.eyJzdWIiOiJ5dXN2YW50aHNAZ21haWwuY29tIiwiZXhwIjoxNjg5MTc3NDM0LCJpYXQiOjE2ODkwOTEwMzR9.3bY1ZdkcNwyHEQZtfvLJ_GNLISDB39v-Aqr0TY4VxSU");
+        Department department = departmentRepo.findById(2);
 
-//        Department department = departmentRepo.findById(1);
-//
-//        Role role = roleRepo.findById(2);
-//
-//        Team team = teamRepo.findById(2);
-//
+        Role role = roleRepo.findById(2);
+
+        Team team = teamRepo.findById(2);
+
+//       User user = userRepo.findById(2);
+//       user.setActivated(true);
+//       userRepo.save(user);
+//       user = userRepo.findById(3);
+//        user.setActivated(true);
+//        userRepo.save(user);
+//       user = userRepo.findById(4);
+//        user.setActivated(true);
+//        userRepo.save(user);
 //        userRepo.save(
 //                User.builder()
 //                        .name("yusvanth")

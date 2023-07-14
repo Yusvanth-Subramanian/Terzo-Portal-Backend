@@ -17,6 +17,8 @@ import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
+
+import java.time.Instant;
 import java.time.LocalDate;
 import java.time.ZoneId;
 import java.time.temporal.ChronoUnit;
@@ -43,8 +45,6 @@ public class UserServiceImpl implements UserService{
 
     AuthenticationManager authenticationManager;
 
-    RefreshTokenService refreshTokenService;
-
     Map<String,Integer> emailToOtp = new HashMap<>();
 
     List<String> verifiedUsers = new ArrayList<>();
@@ -53,7 +53,7 @@ public class UserServiceImpl implements UserService{
     public UserServiceImpl(TeamService teamService,UserRepo userRepo, DepartmentService departmentService,
                            RoleService roleService,JwtUtils jwtUtils,EmailService emailService,
                            PasswordEncoder passwordEncoder
-            ,AuthenticationManager authenticationManager,RefreshTokenService refreshTokenService) {
+            ,AuthenticationManager authenticationManager) {
         this.userRepo = userRepo;
         this.departmentService = departmentService;
         this.roleService = roleService;
@@ -62,7 +62,6 @@ public class UserServiceImpl implements UserService{
         this.emailService = emailService;
         this.passwordEncoder = passwordEncoder;
         this.authenticationManager = authenticationManager;
-        this.refreshTokenService = refreshTokenService;
     }
 
     @Override
@@ -91,9 +90,8 @@ public class UserServiceImpl implements UserService{
                 EmailDTO.builder()
                         .to(user.getEmail())
                         .subject("Welcome to Terzo Portal")
-                        .body("Your Terzo portal account has been opened you can access it with below credentials \n\n" +
-                                "Email : "+user.getEmail()+"\n" +
-                                "Password : "+registerDTO.getPasswordForUser())
+                        .body("Your Terzo portal account has been opened you . Activate it using the below link \n\n" +
+                                "http://localhost:4200/activate-account")
                         .build()
         );
     }
@@ -175,16 +173,11 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<WorkAnniversaryListDTO> getUsersWhoHaveAnniversaryToday() {
         List<User> users = userRepo.findAll();
-        return users.stream().filter(i->
-                Stream.of(i.getDateOfJoining(), new Date())
-                        .mapToLong(Date::getTime)
-                        .mapToObj(time -> {
-                            Date d = new Date(time);
-                            return new int[]{d.getDate(), d.getMonth()};
-                        })
-                        .distinct()
-                        .count() == 1
-                )
+        return users.stream().filter(user -> {
+            LocalDate joiningDate = convertToLocalDate(user.getDateOfJoining());
+            LocalDate today = LocalDate.now();
+            return joiningDate.getMonth()==today.getMonth()&&joiningDate.getDayOfMonth()== today.getDayOfMonth();
+                })
                 .map(this::mapToWorkAnniversaryListDTO).toList();
     }
 
@@ -254,6 +247,10 @@ public class UserServiceImpl implements UserService{
         if(changePasswordDTO.isForForgotPassword()){
             if(verifiedUsers.contains(changePasswordDTO.getEmail())){
                 user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+                if(!user.isActivated()){
+                    user.setActivated(true);
+                }
+                userRepo.save(user);
             }
             else{
                 throw new UserNotVerifiedException();
@@ -268,6 +265,7 @@ public class UserServiceImpl implements UserService{
                 throw new InvalidCredentialsException();
             }
             user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
+            userRepo.save(user);
         }
     }
 
@@ -309,13 +307,27 @@ public class UserServiceImpl implements UserService{
     @Override
     public List<BirthDayBuddiesDTO> getBirthdayBuddies() {
         List<User> users = userRepo.findAll();
+        LocalDate today = LocalDate.now();
+        LocalDate nextWeek = today.plusDays(7);
         return users.stream()
-                .filter(user ->
-                        user.getDateOfBirth().getTime()-new Date().getTime()<=7
-                        && user.getDateOfBirth().getTime()-new Date().getTime()>=0
-                ).map(this::mapToBirthDayBuddiesDtoBuilder).toList();
+                .filter(user -> {
+                    LocalDate userBirthDate = convertToLocalDate(user.getDateOfBirth());
+                    boolean sameMonthAndDay = userBirthDate.getMonth() == today.getMonth() && userBirthDate.getDayOfMonth() == today.getDayOfMonth();
+                    boolean nextWeekBirthday = userBirthDate.isAfter(today) && userBirthDate.isBefore(nextWeek);
+                    return userBirthDate.getMonth()==today.getMonth()
+                            &&userBirthDate.getDayOfMonth()-today.getDayOfMonth()<=7&&
+                            userBirthDate.getDayOfMonth()-today.getDayOfMonth()>=0;
+                })
+                .map(this::mapToBirthDayBuddiesDtoBuilder)
+                .toList();
     }
 
+
+    public static LocalDate convertToLocalDate(Date date) {
+        return Instant.ofEpochMilli(date.getTime())
+                .atZone(ZoneId.systemDefault())
+                .toLocalDate();
+    }
     @Override
     public List<GetManagersResponseDTO> getManagers() {
         List<User> users = userRepo.findAll();
@@ -343,8 +355,8 @@ public class UserServiceImpl implements UserService{
     }
 
     private WorkAnniversaryListDTO mapToWorkAnniversaryListDTO(User user) {
-        LocalDate localDate1 = user.getDateOfJoining().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
-        LocalDate localDate2 = new Date().toInstant().atZone(ZoneId.systemDefault()).toLocalDate();
+        LocalDate localDate1 = convertToLocalDate(user.getDateOfJoining());
+        LocalDate localDate2 = LocalDate.now();
         int years = (int) ChronoUnit.YEARS.between(localDate1, localDate2);
         return WorkAnniversaryListDTO.builder()
                 .year(years)

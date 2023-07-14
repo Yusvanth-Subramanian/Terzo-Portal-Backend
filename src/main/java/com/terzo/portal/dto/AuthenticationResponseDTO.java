@@ -13,7 +13,6 @@ public class AuthenticationResponseDTO {
 
     private String jwt;
 
-    private String refreshToken;
 
     private String userRoles;
 }

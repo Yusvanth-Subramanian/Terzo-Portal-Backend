@@ -2,7 +2,6 @@ package com.terzo.portal.controller;
 
 import com.terzo.portal.dto.*;
 import com.terzo.portal.entity.Holidays;
-import com.terzo.portal.entity.RefreshToken;
 import com.terzo.portal.entity.User;
 import com.terzo.portal.exceptions.*;
 import com.terzo.portal.handler.ResponseHandler;
@@ -32,22 +31,20 @@ public class AppController {
 
     DepartmentService departmentService;
 
-    RefreshTokenService refreshTokenService;
-
     JwtUtils jwtUtils;
 
     @Autowired
     public AppController(DepartmentService departmentService,UserService userService,
                          LoginService loginService, LeaveService leaveService,
                          HolidayService holidayService, TeamService teamService,
-                         RefreshTokenService refreshTokenService,JwtUtils jwtUtils) {
+                         JwtUtils jwtUtils) {
         this.userService = userService;
         this.loginService = loginService;
         this.leaveService = leaveService;
         this.holidayService = holidayService;
         this.teamService = teamService;
         this.departmentService = departmentService;
-        this.refreshTokenService = refreshTokenService;
+
         this.jwtUtils = jwtUtils;
     }
 
@@ -59,7 +56,7 @@ public class AppController {
             return ResponseHandler.generateResponse("User not found , please sign up again!!!",HttpStatus.BAD_REQUEST);
         }
 
-        if(!user.isActive())
+        if(!user.isActive()||!user.isActivated())
             return ResponseHandler.generateResponse("User is not active", HttpStatus.FORBIDDEN);
 
         AuthenticationResponseDTO responseDto = loginService.authenticate(loginDTO);
@@ -176,6 +173,7 @@ public class AppController {
 
     @PostMapping("/check-otp")
     public ResponseEntity<Object> checkOtp(@RequestBody OtpCheckDTO otpCheckDTO){
+        System.out.println(otpCheckDTO);
         if(userService.validOtp(otpCheckDTO)){
             return ResponseHandler.generateResponse("Otp verified",HttpStatus.OK);
         }
@@ -188,28 +186,6 @@ public class AppController {
     public ResponseEntity<Object> changePassword(@RequestBody ChangePasswordDTO changePasswordDTO) throws UserNotFoundException, UserNotVerifiedException, InvalidCredentialsException {
         userService.changePassword(changePasswordDTO);
         return ResponseHandler.generateResponse("Password changed successfully",HttpStatus.OK);
-    }
-
-    @PostMapping("/refresh-token")
-    public ResponseEntity<Object> getRefreshToken(@RequestBody RefreshTokenDTO refreshTokenDto){
-        String requestRefreshToken = refreshTokenDto.getRefreshToken();
-
-        RefreshToken refreshToken = refreshTokenService.findByToken(requestRefreshToken);
-
-        if(refreshToken==null)
-            return ResponseHandler.generateResponse("Refresh token is not is database",HttpStatus.EXPECTATION_FAILED);
-
-        RefreshToken isExpiredToken = refreshTokenService.verifyExpiration(refreshToken);
-
-        if(isExpiredToken==null)
-            return ResponseHandler.generateResponse("Refresh token expired login again",HttpStatus.EXPECTATION_FAILED);
-
-        String newJwtToken = jwtUtils.generateJwt(refreshToken.getUser().getEmail());
-
-        return ResponseHandler.generateResponse(new AuthenticationResponseDTO(
-                newJwtToken,isExpiredToken.getToken(),refreshToken.getUser().getRole().getName()),
-                "Access token created",HttpStatus.OK);
-
     }
 
     @GetMapping("/logout")

@@ -2,7 +2,6 @@ package com.terzo.portal.service;
 
 import com.terzo.portal.dto.AuthenticationResponseDTO;
 import com.terzo.portal.dto.LoginDTO;
-import com.terzo.portal.entity.RefreshToken;
 import com.terzo.portal.entity.User;
 import com.terzo.portal.repository.UserRepo;
 import com.terzo.portal.util.JwtUtils;
@@ -22,15 +21,12 @@ public class LoginService {
 
     AuthenticationManager authenticationManager;
 
-    RefreshTokenService refreshTokenService;
-
     @Autowired
-    public LoginService(JwtUtils jwtUtils, UserDetailsService userDetailsService, UserRepo userRepo, AuthenticationManager authenticationManager, RefreshTokenService refreshTokenService) {
+    public LoginService(JwtUtils jwtUtils, UserDetailsService userDetailsService, UserRepo userRepo, AuthenticationManager authenticationManager) {
         this.jwtUtils = jwtUtils;
         this.userDetailsService = userDetailsService;
         this.userRepo = userRepo;
         this.authenticationManager = authenticationManager;
-        this.refreshTokenService = refreshTokenService;
     }
 
     public AuthenticationResponseDTO authenticate(LoginDTO loginDTO){
@@ -42,7 +38,6 @@ public class LoginService {
             return AuthenticationResponseDTO
                     .builder()
                     .jwt(jwtUtils.generateJwt(loginDTO.getEmail()))
-                    .refreshToken(refreshTokenService.createRefreshToken(user.getId()).getToken())
                     .userRoles(user.getRole().getName())
                     .build();
         }

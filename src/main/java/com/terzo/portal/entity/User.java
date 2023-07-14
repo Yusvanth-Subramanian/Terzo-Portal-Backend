@@ -53,6 +53,8 @@ public class User {
 
     private double paternityLeaveLeft;
 
+    private boolean isActivated;
+
     @ManyToOne
     private Role role;
 
@@ -62,7 +64,5 @@ public class User {
     @ManyToOne
     private Team team;
 
-    @OneToOne(mappedBy = "user", cascade = CascadeType.ALL, orphanRemoval = true)
-    private RefreshToken refreshToken;
 
 }

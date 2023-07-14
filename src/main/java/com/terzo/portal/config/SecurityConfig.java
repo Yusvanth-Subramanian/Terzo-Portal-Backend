@@ -48,6 +48,8 @@ public class SecurityConfig {
                         .requestMatchers("/update-user").hasAnyAuthority("MANAGER","HR")
                         .requestMatchers("/add-holiday").hasAnyAuthority("MANAGER","HR")
                         .requestMatchers("/generate-otp").permitAll()
+                        .requestMatchers("/check-otp").permitAll()
+                        .requestMatchers("/change-password").permitAll()
                         .anyRequest().authenticated()
                 )
                 .logout().disable()

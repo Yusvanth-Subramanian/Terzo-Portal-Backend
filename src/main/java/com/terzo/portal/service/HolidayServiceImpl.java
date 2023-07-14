@@ -22,7 +22,7 @@ public class HolidayServiceImpl implements HolidayService{
 
     @Override
     public List<Holidays> getFutureHolidays() {
-        return holidayRepo.findAll()
+        return holidayRepo.findAllByOrderByDate()
                 .stream()
                 .filter(i->i.getDate().after(new Date()))
                 .toList();
