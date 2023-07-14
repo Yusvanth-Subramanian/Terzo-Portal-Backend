@@ -13,7 +13,7 @@ public interface UserService {
 
     User findByEmail(String email);
 
-    List<ListUserDetailsDTO> getEmployees();
+    List<ListUserDetailsDTO> getEmployees(int start,int end);
 
     CurrentUserProfileDTO getUserDetail();
 
@@ -42,4 +42,6 @@ public interface UserService {
     List<BirthDayBuddiesDTO> getBirthdayBuddies();
 
     List<GetManagersResponseDTO> getManagers();
+
+    String getTotalUsers();
 }

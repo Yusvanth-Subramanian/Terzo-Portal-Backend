@@ -68,9 +68,11 @@ public class AppController {
 
     }
 
-    @GetMapping("/get-employees")
-    public ResponseEntity<Object> listAllUser(){
-        List<ListUserDetailsDTO> detailsDTOS = userService.getEmployees();
+    @GetMapping("/get-employees/{start}/{end}")
+    public ResponseEntity<Object> listAllUser(
+            @PathVariable("start")int start,@PathVariable("end")int end
+    ){
+        List<ListUserDetailsDTO> detailsDTOS = userService.getEmployees(start,end);
         return ResponseHandler.generateResponse(detailsDTOS,"User details retrieved",HttpStatus.OK);
     }
 
@@ -245,6 +247,11 @@ public class AppController {
     public ResponseEntity<Object> disapproveLeave(@RequestParam("id")int id){
         leaveService.disapprove(id);
         return ResponseHandler.generateResponse("Leave disapproved",HttpStatus.OK);
+    }
+
+    @GetMapping("/get-total-users")
+    public ResponseEntity<Object> getTotalUsers(){
+        return ResponseHandler.generateResponse(userService.getTotalUsers(),"Total users retrieved",HttpStatus.OK);
     }
 
 }

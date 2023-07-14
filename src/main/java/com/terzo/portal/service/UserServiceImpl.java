@@ -11,6 +11,9 @@ import com.terzo.portal.util.JwtUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.beans.BeanUtils;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
@@ -121,10 +124,13 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public List<ListUserDetailsDTO> getEmployees() {
-        List<User> list = userRepo.findAll();
-        return list.stream().map(this::mapToListUserDetailsDTO).toList();
-
+    public List<ListUserDetailsDTO> getEmployees(int start,int end) {
+        Pageable paging = PageRequest.of(start,end);
+        Page<User> list = userRepo.findAll(paging);
+        if(list.hasContent()){
+            return list.stream().map(this::mapToListUserDetailsDTO).toList();
+        }
+        return new ArrayList<>();
     }
 
     @Override
@@ -308,12 +314,9 @@ public class UserServiceImpl implements UserService{
     public List<BirthDayBuddiesDTO> getBirthdayBuddies() {
         List<User> users = userRepo.findAll();
         LocalDate today = LocalDate.now();
-        LocalDate nextWeek = today.plusDays(7);
         return users.stream()
                 .filter(user -> {
                     LocalDate userBirthDate = convertToLocalDate(user.getDateOfBirth());
-                    boolean sameMonthAndDay = userBirthDate.getMonth() == today.getMonth() && userBirthDate.getDayOfMonth() == today.getDayOfMonth();
-                    boolean nextWeekBirthday = userBirthDate.isAfter(today) && userBirthDate.isBefore(nextWeek);
                     return userBirthDate.getMonth()==today.getMonth()
                             &&userBirthDate.getDayOfMonth()-today.getDayOfMonth()<=7&&
                             userBirthDate.getDayOfMonth()-today.getDayOfMonth()>=0;
@@ -335,6 +338,11 @@ public class UserServiceImpl implements UserService{
                 .filter(user -> user.getRole().getName().equals("MANAGER"))
                 .map(this::mapUserGetManagerResponseDTO)
                 .toList();
+    }
+
+    @Override
+    public String getTotalUsers() {
+        return userRepo.count()+"";
     }
 
     private GetManagersResponseDTO mapUserGetManagerResponseDTO(User user) {
