@@ -47,4 +47,6 @@ public class CurrentUserProfileDTO {
 
     private String userRole;
 
+    private String team;
+
 }

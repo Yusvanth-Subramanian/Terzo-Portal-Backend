@@ -128,25 +128,38 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public List<ListUserDetailsDTO> getEmployees(int start,int end,String sortType,String query) {
-        if(sortType.equals("null")||query.equals("null")){
-            Pageable paging = PageRequest.of(start,end);
-            Page<User> list = userRepo.findAll(paging);
+    public List<ListUserDetailsDTO> getEmployees(int start, int end, String sortType, String columnName, String search) {
+        if (sortType.equals("null") || columnName.equals("null")) {
+            Pageable paging = PageRequest.of(start, end);
+            Page<User> list;
 
-                if (list.hasContent()) {
-                    return list.stream().map(this::mapToListUserDetailsDTO).toList();
-                }
+            if (search.equals("null")) {
+                list = userRepo.findAll(paging);
+            } else {
+                list = userRepo.findByNameContainingIgnoreCase(search, paging);
+            }
+
+            if (list.hasContent()) {
+                return list.stream().map(this::mapToListUserDetailsDTO).toList();
+            }
+        } else {
+            Page<User> users;
+
+            if (search.equals("null")) {
+                users = userRepo.findAll(PageRequest.of(start, end, Sort.by(Sort.Direction.valueOf(sortType), columnName)));
+            } else {
+                users = userRepo.findByNameContainingIgnoreCase(search, PageRequest.of(start, end, Sort.by(Sort.Direction.valueOf(sortType), columnName)));
+            }
+
+            if (users.hasContent()) {
+                return users.stream().map(this::mapToListUserDetailsDTO).toList();
+            }
         }
-        Page<User> users = userRepo.findAll(PageRequest.of(start,end,
-                Sort.by(Sort.Direction.valueOf(sortType),query)));
-
-                if(users.hasContent()){
-                    return users.stream()
-                            .map(this::mapToListUserDetailsDTO).toList();
-                }
 
         return new ArrayList<>();
     }
+
+
 
     @Override
     public CurrentUserProfileDTO getUserDetail() {
@@ -157,6 +170,7 @@ public class UserServiceImpl implements UserService{
         BeanUtils.copyProperties(user,currentUserProfileDTO);
         currentUserProfileDTO.setDepartmentName(user.getDepartment().getName());
         currentUserProfileDTO.setUserRole(user.getRole().getName());
+        currentUserProfileDTO.setTeam(user.getTeam().getName());
         if(userRepo.findById(user.getReportsTo())==null) {
             currentUserProfileDTO.setReportsToUserName("Reports to no one");
         }
