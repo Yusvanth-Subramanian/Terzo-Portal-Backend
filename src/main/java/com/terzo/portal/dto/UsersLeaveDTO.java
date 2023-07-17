@@ -17,4 +17,6 @@ public class UsersLeaveDTO {
 
     private Date endDate;
 
+    private String note;
+
 }

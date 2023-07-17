@@ -89,14 +89,13 @@ public class UserServiceImpl implements UserService{
         user.setProfilePicUrl("");
         user.setTeam(teamService.getTeamById(registerDTO.getTeamId()));
         userRepo.save(user);
+        verifiedUsers.add(user.getEmail());
         emailService.send(
                 EmailDTO.builder()
                         .to(user.getEmail())
                         .subject("Welcome to Terzo Portal")
-                        .body("""
-                                Your Terzo portal account has been opened you . Activate it using the below link\s
-
-                                http://localhost:4200/activate-account""")
+                        .body("Your Terzo portal account has been opened you . Activate it using the below link\n\n"+
+                                "http://localhost:4200/change-password?email="+registerDTO.getEmail())
                         .build()
         );
     }
@@ -129,8 +128,8 @@ public class UserServiceImpl implements UserService{
     }
 
     @Override
-    public List<ListUserDetailsDTO> getEmployees(int start,int end,String type,String query) {
-        if(type.equals("null")||query.equals("null")){
+    public List<ListUserDetailsDTO> getEmployees(int start,int end,String sortType,String query) {
+        if(sortType.equals("null")||query.equals("null")){
             Pageable paging = PageRequest.of(start,end);
             Page<User> list = userRepo.findAll(paging);
 
@@ -139,7 +138,7 @@ public class UserServiceImpl implements UserService{
                 }
         }
         Page<User> users = userRepo.findAll(PageRequest.of(start,end,
-                Sort.by(Sort.Direction.valueOf(type),query)));
+                Sort.by(Sort.Direction.valueOf(sortType),query)));
 
                 if(users.hasContent()){
                     return users.stream()
@@ -221,12 +220,15 @@ public class UserServiceImpl implements UserService{
             List<UsersLeaveDTO> usersLeaveDTOList = new ArrayList<>();
             List<AppliedLeave> appliedLeaves = user.getAppliedLeaves();
             for(AppliedLeave leave : appliedLeaves){
-                usersLeaveDTOList.add(
-                        UsersLeaveDTO.builder()
-                                .endDate(leave.getToDate())
-                                .startDate(leave.getFromDate())
-                                .build()
-                );
+                if(leave.isApproved()) {
+                    usersLeaveDTOList.add(
+                            UsersLeaveDTO.builder()
+                                    .endDate(leave.getToDate())
+                                    .startDate(leave.getFromDate())
+                                    .note(leave.getNote())
+                                    .build()
+                    );
+                }
             }
             userDataInCalendarDTO.setUsersLeaves(usersLeaveDTOList);
             res.add(userDataInCalendarDTO);
@@ -254,7 +256,6 @@ public class UserServiceImpl implements UserService{
     @Override
     public boolean validOtp(OtpCheckDTO otpCheckDTO) {
         if(emailToOtp.get(otpCheckDTO.getEmail()).equals(Integer.valueOf(otpCheckDTO.getOtp()))){
-            verifiedUsers.add(otpCheckDTO.getEmail());
             return true;
         }
         return false;
@@ -267,11 +268,17 @@ public class UserServiceImpl implements UserService{
             throw new UserNotFoundException();
         }
         if(changePasswordDTO.isForForgotPassword()){
+
             if(verifiedUsers.contains(changePasswordDTO.getEmail())){
                 user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
                 if(!user.isActivated()){
                     user.setActivated(true);
                 }
+                emailService.send(EmailDTO.builder()
+                                .to(changePasswordDTO.getEmail())
+                                .subject("Alert from Terzo Portal")
+                                .body("Your password has been changed.")
+                        .build());
                 userRepo.save(user);
             }
             else{
@@ -288,6 +295,11 @@ public class UserServiceImpl implements UserService{
             }
             user.setPassword(passwordEncoder.encode(changePasswordDTO.getNewPassword()));
             userRepo.save(user);
+            emailService.send(EmailDTO.builder()
+                    .to(changePasswordDTO.getEmail())
+                    .subject("Alert from Terzo Portal")
+                    .body("Your password has been changed.")
+                    .build());
         }
     }
 

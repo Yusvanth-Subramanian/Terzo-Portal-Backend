@@ -70,12 +70,12 @@ public class AppController {
 
     }
 
-    @GetMapping("/get-employees/{start}/{end}/{type}/{query}")
+    @GetMapping("/get-employees/{start}/{end}/{sortType}/{columnName}")
     public ResponseEntity<Object> listAllUser(
             @PathVariable("start")int start,@PathVariable("end")int end,
-            @PathVariable("type")String type,@PathVariable("query")String query
+            @PathVariable("sortType")String sortType,@PathVariable("columnName")String columnName
     ){
-        List<ListUserDetailsDTO> detailsDTOS = userService.getEmployees(start,end,type,query);
+        List<ListUserDetailsDTO> detailsDTOS = userService.getEmployees(start,end,sortType,columnName);
         return ResponseHandler.generateResponse(detailsDTOS,"User details retrieved",HttpStatus.OK);
     }
 
